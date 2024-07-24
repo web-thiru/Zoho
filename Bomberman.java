@@ -11,6 +11,9 @@ public class Bomberman {
 
   public static List<int[]> bombMatrix = new ArrayList<>();
 
+  public static List<String[]> enemyMovement = new ArrayList<>(); //{"BE","H"};
+  public static List<int[]> temporaryMovement = new ArrayList<>();
+
   public static boolean gameOver = false;
   public static boolean gameWin = false;
 
@@ -61,16 +64,68 @@ public class Bomberman {
     return false;
   }
 
+  public static void enemyMove() {
+    temporaryMovement.clear();
+    for (String[] enemy : enemyMovement) {
+      int i = enemy[0].charAt(0) - 'A';
+      int j = enemy[0].charAt(1) - 'A';
+      String pos = enemy[1];
+      if (pos.equals("V")) {
+        if (
+          (i - 1) < 0 ||
+          !matrix[i - 1][j].equals("  ") ||
+          temporaryMovement.contains(new int[] { i - 1, j })
+        ) {
+          if (
+            (i + 1) >= length ||
+            !matrix[i + 1][j].equals("  ") ||
+            temporaryMovement.contains(new int[] { i + 1, j })
+          ) {
+            continue;
+          } else temporaryMovement.add(new int[] { i + 1, j });
+        } else {
+          temporaryMovement.add(new int[] { i - 1, j });
+        }
+      } else if (pos.equals("H")) {
+        if (
+          (j - 1) < 0 ||
+          !matrix[j][j - 1].equals("  ") ||
+          temporaryMovement.contains(new int[] { i, j - 1 })
+        ) {
+          if (
+            (j + 1) >= length ||
+            !matrix[i][j + 1].equals("  ") ||
+            temporaryMovement.contains(new int[] { i, j + 1 })
+          ) {
+            continue;
+          } else {
+            temporaryMovement.add(new int[] { i, j + 1 });
+          }
+        } else {
+          temporaryMovement.add(new int[] { i, j - 1 });
+        }
+      }
+    }
+  }
+
   public static void move(String movement) {
     int i = currentPos[0];
     int j = currentPos[1];
     if (movement.equals("UP")) {
-      if ((i - 1) < 0 || !matrix[i - 1][j].equals("  ")) {
-        if (matrix[i - 1][j].equals("E ")) {
+      enemyMove();
+      if (
+        (i - 1) < 0 ||
+        !matrix[i - 1][j].equals("  ") ||
+        temporaryMovement.contains(new int[] { i - 1, j })
+      ) {
+        if (temporaryMovement.contains(new int[] { i - 1, j })) {
           System.out.println("You Died......");
           gameOver = true;
           return;
-        } else if (matrix[i - 1][j].equals("K ")) {
+        } else {
+          matrix[i - 1][j] = "E ";
+        }
+        if (matrix[i - 1][j].equals("K ")) {
           System.out.println("You win...");
           gameWin = true;
           return;
@@ -81,12 +136,19 @@ public class Bomberman {
         currentPos[0] = i - 1;
       }
     } else if (movement.equals("DOWN")) {
-      if ((i + 1) >= length || !matrix[i + 1][j].equals("  ")) {
-        if (matrix[i + 1][j].equals("E ")) {
+      if (
+        (i + 1) >= length ||
+        !matrix[i + 1][j].equals("  ") ||
+        temporaryMovement.contains(new int[] { i + 1, j })
+      ) {
+        if (temporaryMovement.contains(new int[] { i + 1, j })) {
           System.out.println("You Died......");
           gameOver = true;
           return;
-        } else if (matrix[i + 1][j].equals("K ")) {
+        } else {
+          matrix[i + 1][j] = "E ";
+        }
+        if (matrix[i + 1][j].equals("K ")) {
           System.out.println("You win...");
           gameWin = true;
           return;
@@ -97,12 +159,19 @@ public class Bomberman {
         currentPos[0] = i + 1;
       }
     } else if (movement.equals("LEFT")) {
-      if ((j - 1) < 0 || !matrix[i][j - 1].equals("  ")) {
-        if (matrix[i][j - 1].equals("E ")) {
+      if (
+        (j - 1) < 0 ||
+        !matrix[i][j - 1].equals("  ") ||
+        temporaryMovement.contains(new int[] { i, j - 1 })
+      ) {
+        if (temporaryMovement.contains(new int[] { i, j - 1 })) {
           System.out.println("You Died......");
           gameOver = true;
           return;
-        } else if (matrix[i][j - 1].equals("K ")) {
+        } else {
+          matrix[i][j - 1] = "E ";
+        }
+        if (matrix[i][j - 1].equals("K ")) {
           System.out.println("You win...");
           gameWin = true;
           return;
@@ -113,12 +182,19 @@ public class Bomberman {
         currentPos[1] = j - 1;
       }
     } else if (movement.equals("RIGHT")) {
-      if ((j + 1) >= length || !matrix[i][j + 1].equals("  ")) {
-        if (matrix[i][j + 1].equals("E ")) {
+      if (
+        (j + 1) >= length ||
+        !matrix[i][j + 1].equals("  ") ||
+        temporaryMovement.contains(new int[] { i, j + 1 })
+      ) {
+        if (temporaryMovement.contains(new int[] { i, j + 1 })) {
           System.out.println("You Died......");
           gameOver = true;
           return;
-        } else if (matrix[i][j + 1].equals("K ")) {
+        } else {
+          matrix[i][j + 1] = "E ";
+        }
+        if (matrix[i][j + 1].equals("K ")) {
           System.out.println("You win...");
           gameWin = true;
           return;
@@ -156,7 +232,7 @@ public class Bomberman {
       }
     }
 
-    //player position
+    //key position
     while (true) {
       print();
       System.out.print("Set Key position : ");
@@ -178,11 +254,14 @@ public class Bomberman {
     for (int ind = 0; ind < enemyCount; ind++) {
       System.out.print("Set Enemy " + (ind + 1) + " position : ");
       String pos = input.next();
+      System.out.print("Set its movement(H/V) : ");
+      String mov = input.next();
       while (true) {
         if (checkIsValid(pos)) {
           int i = (int) pos.charAt(0) - 'A';
           int j = (int) pos.charAt(1) - 'A';
           matrix[i][j] = "E ";
+          enemyMovement.add(new String[] { pos, mov });
           break;
         } else {
           System.out.println("There is wall here, place somewhere");
